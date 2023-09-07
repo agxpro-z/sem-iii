@@ -55,8 +55,8 @@ RoundRobin::RoundRobin(std::vector<Process>& processList) {
 void RoundRobin::scheduleProcess() {
     // Keep scheduling until all processes are processed.
     while (!mProcessList.empty() || !mRunningProcessList.empty()) {
-        // If arrivalTime is equal to mTimeCounter then load process into running Queue.
-        while (mTimeCounter == mProcessList.front().arrivalTime) {
+        // If arrivalTime is less than mTimeCounter then load process into running Queue.
+        while (!mProcessList.empty() && mTimeCounter >= mProcessList.front().arrivalTime) {
             mRunningProcessList.push(mProcessList.front());
             mProcessList.pop();
         }
@@ -66,25 +66,30 @@ void RoundRobin::scheduleProcess() {
             Process currentProcess = mRunningProcessList.front();
             mRunningProcessList.pop();
 
-            currentProcess.tempBurstTime -= mTimeQuantum; // Process for time quantum.
-
             // Update starting time if required
             if (currentProcess.init == false) {
                 currentProcess.startingTime = mTimeCounter;
                 currentProcess.init = true;
             }
+            mGantChart.push_back({currentProcess.pid, mTimeCounter}); // Push process to gant chart.
+
+            if (currentProcess.tempBurstTime < mTimeQuantum) {
+                mTimeCounter += currentProcess.tempBurstTime;
+                currentProcess.tempBurstTime = 0;
+            } else {
+                currentProcess.tempBurstTime -= mTimeQuantum; // Process for time quantum.
+                mTimeCounter += mTimeQuantum;
+            }
 
             if (currentProcess.tempBurstTime == 0) {
-                currentProcess.finishingTime = mTimeCounter + 1; // Update finishing time.
+                currentProcess.finishingTime = mTimeCounter; // Update finishing time.
                 mFinishedProcesses.push_back(currentProcess);
             } else {
                 mRunningProcessList.push(currentProcess);
             }
-
-            mGantChart.push_back({currentProcess.pid, mTimeCounter}); // Push process to gant chart.
+        } else {
+            mTimeCounter += mTimeQuantum;
         }
-
-        ++mTimeCounter;
     }
 
     // Update Finished processes table
