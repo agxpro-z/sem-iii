@@ -32,11 +32,58 @@ bool compare(Process& p1, Process& p2) {
     return p1.arrivalTime < p2.arrivalTime;
 }
 
+// Class to hold all running processes and provide some
+// useful functionalities.
+class RunningProcess {
+  private:
+    // Index of the vector is priority.
+    std::vector<std::queue<Process>> mProcessList;
+    int processCount;
+
+  public:
+    RunningProcess() : processCount(0) {}
+
+    int getSize() {
+        return processCount;
+    }
+
+    bool empty() {
+        return processCount == 0;
+    }
+
+    int addProcess(Process process) {
+        while (process.priority >= mProcessList.size()) {
+            // If size of vector is less than the process.priority
+            // then increase vector size.
+            mProcessList.push_back(std::queue<Process>());
+        }
+
+        // Add the process to the list.
+        mProcessList[process.priority].push(process);
+        return ++processCount;
+    }
+
+    // Returns the higest priority process.
+    Process getProcess() {
+        for (auto& processList : mProcessList) {
+            if (processList.size() > 0) {
+                Process process = processList.front();
+                processList.pop();
+
+                --processCount;
+                return process;
+            }
+        }
+
+        return Process(); // Return empty process.
+    }
+};
+
 class PriorityPreemptive {
   private:
     std::queue<Process> mProcessList; // Initially store all processes in queue.
     // Store running processes.
-    std::priority_queue<Process, std::vector<Process>, PriorityCompare> mRunningProcessList;
+    RunningProcess mRunningProcessList;
     std::vector<std::pair<int, int>> mGantChart; // <pid, time>
     std::vector<Process> mFinishedProcesses;
 
@@ -67,14 +114,13 @@ void PriorityPreemptive::scheduleProcess() {
     while (!mProcessList.empty() || !mRunningProcessList.empty()) {
         // If arrivalTime is less than mTimeCounter then load process into running Queue.
         while (!mProcessList.empty() && mTimeCounter >= mProcessList.front().arrivalTime) {
-            mRunningProcessList.push(mProcessList.front());
+            mRunningProcessList.addProcess(mProcessList.front());
             mProcessList.pop();
         }
 
         if (!mRunningProcessList.empty()) {
             // Fetch least burst time process into currentProcess
-            Process currentProcess = mRunningProcessList.top();
-            mRunningProcessList.pop();
+            Process currentProcess = mRunningProcessList.getProcess();
 
             // Update starting time if required
             if (currentProcess.init == false) {
@@ -95,7 +141,16 @@ void PriorityPreemptive::scheduleProcess() {
                 currentProcess.finishingTime = mTimeCounter; // Update finishing time.
                 mFinishedProcesses.push_back(currentProcess);
             } else {
-                mRunningProcessList.push(currentProcess);
+                // Add all the processes to the process list which
+                // comes during the processing of the current process.
+                for (int i = mTimeCounter - mTimeQuantum; i <= mTimeCounter; ++i) {
+                    if (!mProcessList.empty() && i >= mProcessList.front().arrivalTime) {
+                        mRunningProcessList.addProcess(mProcessList.front());
+                        mProcessList.pop();
+                    }
+                }
+
+                mRunningProcessList.addProcess(currentProcess);
             }
         } else {
             mTimeCounter += mTimeQuantum;
@@ -154,6 +209,7 @@ void PriorityPreemptive::printGanttChart() {
 
 int main() {
     // std::vector<Process> processList = {
+    //    // pid, arrival time, priority, burst time, tmp burst time
     //     {1, 0, 4, 4},
     //     {2, 0, 3, 3},
     //     {3, 1, 1, 1},
@@ -163,10 +219,11 @@ int main() {
     // };
 
     std::vector<Process> processList = {
+        // pid, arrival time, priority, burst time, tmp burst time
         {1, 0, 1, 10, 10},
         {2, 1, 2, 9, 9},
         {0, 2, 1, 5, 5},
-        {4, 3, 3, 4, 4},
+        {4, 3, 2, 4, 4},
         {5, 40, 5, 4, 4},
     };
 
