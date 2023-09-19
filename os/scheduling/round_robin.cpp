@@ -85,6 +85,16 @@ void RoundRobin::scheduleProcess() {
                 currentProcess.finishingTime = mTimeCounter; // Update finishing time.
                 mFinishedProcesses.push_back(currentProcess);
             } else {
+                // Add all the processes to the process list which
+                // comes during the processing of the current process.
+                for (int i = mTimeCounter - mTimeQuantum; i <= mTimeCounter; ++i) {
+                    if (!mProcessList.empty() && i >= mProcessList.front().arrivalTime) {
+                        mRunningProcessList.push(mProcessList.front());
+                        mProcessList.pop();
+                    }
+                }
+
+                // Push current process at the end of the queue.
                 mRunningProcessList.push(currentProcess);
             }
         } else {
@@ -143,6 +153,7 @@ void RoundRobin::printGanttChart() {
 
 int main() {
     // std::vector<Process> processList = {
+    //     // pid, arrival time, burst time, tmp burst time
     //     {1, 0, 4, 4},
     //     {2, 0, 3, 3},
     //     {3, 1, 1, 1},
@@ -152,6 +163,7 @@ int main() {
     // };
 
     std::vector<Process> processList = {
+        // pid, arrival time, burst time, tmp burst time
         {1, 0, 10, 10},
         {2, 1, 9, 9},
         {3, 2, 5, 5},
