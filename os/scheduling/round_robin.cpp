@@ -45,8 +45,10 @@ RoundRobin::RoundRobin(std::vector<Process>& processList) {
     std::sort(processList.begin(), processList.end(), compare);
 
     // Load all processes to queue.
-    for (Process& process : processList)
+    for (Process& process : processList) {
+        process.tempBurstTime = process.burstTime;
         mProcessList.push(process);
+    }
 
     mTimeCounter = 0;
     mTimeQuantum = 1; // 1 second.
@@ -153,7 +155,7 @@ void RoundRobin::printGanttChart() {
 
 int main() {
     // std::vector<Process> processList = {
-    //     // pid, arrival time, burst time, tmp burst time
+    //     // pid, arrival time, burst time
     //     {1, 0, 4, 4},
     //     {2, 0, 3, 3},
     //     {3, 1, 1, 1},
@@ -163,12 +165,12 @@ int main() {
     // };
 
     std::vector<Process> processList = {
-        // pid, arrival time, burst time, tmp burst time
-        {1, 0, 10, 10},
-        {2, 1, 9, 9},
-        {3, 2, 5, 5},
-        {4, 3, 4, 4},
-        {5, 40, 4, 4},
+        // pid, arrival time, burst time
+        {1, 0, 10},
+        {2, 1, 9},
+        {3, 2, 5},
+        {4, 3, 4},
+        {5, 40, 4},
     };
 
     RoundRobin(processList).print();

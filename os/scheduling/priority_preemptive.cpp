@@ -55,8 +55,10 @@ PriorityPreemptive::PriorityPreemptive(std::vector<Process>& processList) {
     std::sort(processList.begin(), processList.end(), compare);
 
     // Load all processes to queue.
-    for (Process& process : processList)
+    for (Process& process : processList) {
+        process.tempBurstTime = process.burstTime;
         mProcessList.push(process);
+    }
 
     mTimeCounter = 0;
     mTimeQuantum = 1; // 1 second.
@@ -153,21 +155,13 @@ void PriorityPreemptive::printGanttChart() {
 }
 
 int main() {
-    // std::vector<Process> processList = {
-    //     {1, 0, 4, 4},
-    //     {2, 0, 3, 3},
-    //     {3, 1, 1, 1},
-    //     {4, 2, 4, 4},
-    //     {5, 1, 2, 2},
-    //     {6, 4, 6, 6},
-    // };
-
     std::vector<Process> processList = {
-        {1, 0, 1, 10, 10},
-        {2, 1, 2, 9, 9},
-        {0, 2, 1, 5, 5},
-        {4, 3, 3, 4, 4},
-        {5, 40, 5, 4, 4},
+        // pid, arrival time, priority, burst time
+        {1, 0, 1, 10},
+        {2, 1, 2, 9},
+        {0, 2, 1, 5},
+        {4, 3, 3, 4},
+        {5, 40, 5, 4},
     };
 
     PriorityPreemptive(processList).print();
